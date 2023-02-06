@@ -1,0 +1,85 @@
+server:
+  port: 8090
+  servlet:
+    context-path: /example
+
+management:
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  server:
+    port: 10108
+  endpoints:
+    web:
+      exposure:
+        include: '*' # 测试使用，开启了所有端点，生产环境不建议 *
+
+spring:
+  profiles:
+    active: dev
+
+  dynamic:
+    thread-pool:
+      # 是否开启动态线程池
+      enable: true
+      # 是否打印 banner
+      banner: true
+      # 是否开启线程池数据采集，对接 Micrometer、ES、Log 等
+      collect: true
+      collectType: 'micrometer'
+      collectInterval: 200
+      # 检查线程池状态，是否达到报警条件，单位毫秒
+      check-state-interval: 3000
+      # 通知报警平台，请替换为自己创建的群机器人
+      notify-platforms:
+        - platform: 'DING'
+          token: xxx
+          secret: xxx  # 加签专属
+      # Nacos、Apollo、Zookeeper、ETCD、Polaris 任选其一
+      nacos:
+        data-id: xxx
+        group: xxx
+#      apollo:
+#        namespace: xxxx
+      # 配置中心文件格式
+      config-file-type: yml
+      executors:
+        - thread-pool-id: 'message-consume'
+          # 核心线程数
+          core-pool-size: 1
+          # 最大线程数
+          maximum-pool-size: 1
+          # 阻塞队列名称，参考 BlockingQueueTypeEnum，支持 SPI
+          blocking-queue: 'LinkedBlockingQueue'
+          # 阻塞队列大小
+          queue-capacity: 1
+          # 执行超时时间，超过此时间发起报警，单位毫秒
+          execute-time-out: 1000
+          # 拒绝策略名称，参考 RejectedPolicyTypeEnum，支持 SPI
+          rejected-handler: 'AbortPolicy'
+          # 线程存活时间，单位秒
+          keep-alive-time: 1024
+          # 是否允许核心线程超时
+          allow-core-thread-time-out: true
+          # 线程工厂名称前缀
+          thread-name-prefix: 'message-consume'
+          # 是否报警
+          alarm: true
+          # 活跃度报警阈值；假设线程池最大线程数 10，当线程数达到 8 发起报警
+          active-alarm: 80
+          # 容量报警阈值；假设阻塞队列容量 100，当容量达到 80 发起报警
+          capacity-alarm: 80
+        - thread-pool-id: 'message-produce'
+          core-pool-size: 1
+          maximum-pool-size: 1
+          queue-capacity: 1
+          execute-time-out: 1000
+          blocking-queue: 'LinkedBlockingQueue'
+          rejected-handler: 'AbortPolicy'
+          keep-alive-time: 1024
+          allow-core-thread-time-out: true
+          thread-name-prefix: 'message-consume'
+          alarm: true
+          active-alarm: 80
+          capacity-alarm: 80
