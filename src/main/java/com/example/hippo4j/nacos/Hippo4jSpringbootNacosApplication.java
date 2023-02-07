@@ -1,27 +1,32 @@
 package com.example.hippo4j.nacos;
 
 import cn.hippo4j.core.enable.EnableDynamicThreadPool;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import com.alibaba.ttl.threadpool.TtlExecutors;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @SpringBootApplication
 @EnableDynamicThreadPool
 @RestController
-public class Hippo4jSpringbootNacosApplication {
+public class Hippo4jSpringbootNacosApplication implements InitializingBean {
 
 	@Autowired
 	@Qualifier("messageConsumeDynamicExecutor")
-	private ExecutorService normalThreadPoolExecutor;
+	private ThreadPoolTaskExecutor normalThreadPoolExecutor;
 
 	@Autowired
 	@Qualifier("messageProduceDynamicExecutor")
+	private ExecutorService messageProduceDynamicExecutor;
+
 	private ExecutorService ttlThreadPoolExecutor;
 
 	public static void main(String[] args) {
@@ -35,7 +40,7 @@ public class Hippo4jSpringbootNacosApplication {
 	public void addNormalThread() {
 		normalThreadPoolExecutor.execute(() -> {
 			try {
-				TimeUnit.MINUTES.sleep(2);
+				TimeUnit.SECONDS.sleep(2);
 			} catch (InterruptedException e) {
 				throw new RuntimeException(e);
 			}
@@ -49,10 +54,15 @@ public class Hippo4jSpringbootNacosApplication {
 	public void addThread() {
 		ttlThreadPoolExecutor.execute(() -> {
 			try {
-				TimeUnit.MINUTES.sleep(2);
+				TimeUnit.SECONDS.sleep(2);
 			} catch (InterruptedException e) {
 				throw new RuntimeException(e);
 			}
 		});
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		ttlThreadPoolExecutor = TtlExecutors.getTtlExecutorService(messageProduceDynamicExecutor);
 	}
 }

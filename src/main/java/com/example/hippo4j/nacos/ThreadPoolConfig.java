@@ -2,25 +2,28 @@ package com.example.hippo4j.nacos;
 
 import cn.hippo4j.core.executor.DynamicThreadPool;
 import cn.hippo4j.core.executor.support.ThreadPoolBuilder;
-import com.alibaba.ttl.threadpool.TtlExecutors;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor.AbortPolicy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Configuration
 public class ThreadPoolConfig {
 
-    @Bean
+//    @Bean
     @DynamicThreadPool
-    public ThreadPoolExecutor messageConsumeDynamicExecutor() {
+    public ThreadPoolTaskExecutor messageConsumeDynamicExecutor() {
         String threadPoolId = "message-consume";
-        ThreadPoolExecutor messageConsumeDynamicExecutor = ThreadPoolBuilder.builder()
-            .threadFactory(threadPoolId)
-            .threadPoolId(threadPoolId)
-            .dynamicPool()
-            .build();
-        return messageConsumeDynamicExecutor;
+        ThreadPoolTaskExecutor threadPoolExecutor = new ThreadPoolTaskExecutor();
+        threadPoolExecutor.setThreadNamePrefix(threadPoolId);
+        threadPoolExecutor.setCorePoolSize(10);
+        threadPoolExecutor.setMaxPoolSize(10);
+        threadPoolExecutor.setQueueCapacity(100);
+        threadPoolExecutor.setRejectedExecutionHandler(new AbortPolicy());
+        return threadPoolExecutor;
     }
 
     @Bean
@@ -34,8 +37,7 @@ public class ThreadPoolConfig {
             .build();
 
 
-        return TtlExecutors.getTtlExecutorService(messageProduceDynamicExecutor);
-//        return messageProduceDynamicExecutor;
+        return messageProduceDynamicExecutor;
     }
 
 }
